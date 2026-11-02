@@ -167,6 +167,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       ? context.tr('goalReached')
                       : '${remaining.toStringAsFixed(1)} ${context.tr('kgToGo')}',
                 ),
+                ..._summaryLines(context, profile.targetWeightKg),
               ],
             ),
           ),
@@ -206,6 +207,61 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         },
       ),
     );
+  }
+
+  /// "This week: -0.5 kg" line and, when the trend points at the goal,
+  /// a rough "about N weeks to your goal" estimate. Empty when the
+  /// history is too short to say anything honest.
+  List<Widget> _summaryLines(BuildContext context, double targetKg) {
+    final history = StorageService.getWeightHistory();
+    if (history.length < 2) return const [];
+    final sorted = [...history]..sort((a, b) => a.date.compareTo(b.date));
+    final latest = sorted.last;
+
+    // Baseline: the newest entry that is at least ~a week old.
+    final weekAgo = latest.date.subtract(const Duration(days: 7));
+    final baseIndex =
+        sorted.lastIndexWhere((e) => !e.date.isAfter(weekAgo));
+    if (baseIndex < 0) return const [];
+    final base = sorted[baseIndex];
+    final spanDays = latest.date.difference(base.date).inDays;
+    if (spanDays < 5) return const [];
+
+    final unit = ref.read(unitProvider);
+    const unitService = UnitService();
+    final change = unitService.fromKg(latest.weightKg - base.weightKg, unit);
+    final sign = change > 0 ? '+' : '';
+    final lines = <Widget>[
+      const SizedBox(height: 6),
+      Text(
+        context.tr('weekChange').replaceAll(
+              '{v}',
+              '$sign${change.toStringAsFixed(1)} ${unitService.label(unit)}',
+            ),
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+    ];
+
+    // ETA from the whole recorded trend, only when it moves toward the goal.
+    final totalDays =
+        latest.date.difference(sorted.first.date).inDays.toDouble();
+    final remainingKg = latest.weightKg - targetKg;
+    if (totalDays >= 5 && remainingKg.abs() > 0.05) {
+      final perDay = (latest.weightKg - sorted.first.weightKg) / totalDays;
+      if (perDay != 0 && (perDay < 0) == (remainingKg > 0)) {
+        final weeks = (remainingKg.abs() / perDay.abs() / 7).ceil();
+        if (weeks >= 1 && weeks <= 520) {
+          lines.add(const SizedBox(height: 2));
+          lines.add(
+            Text(
+              context.tr('etaGoal').replaceAll('{w}', '$weeks'),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          );
+        }
+      }
+    }
+    return lines;
   }
 
   Widget _card(Widget child) => Card(

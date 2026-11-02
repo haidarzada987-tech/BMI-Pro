@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../app/theme/theme_provider.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/localization/localization_extension.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/storage/storage_service.dart';
 import '../../core/storage/unit_provider.dart';
 
@@ -87,6 +92,34 @@ class SettingsPage extends ConsumerWidget {
               if (value != null) await ref.read(unitProvider.notifier).change(value);
             },
           ),
+          const Divider(height: 30),
+          const _ReminderTile(),
+          const Divider(height: 30),
+          Text(
+            context.tr('dataSection'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload_file_outlined),
+            title: Text(context.tr('exportBackup')),
+            onTap: () async {
+              final json = jsonEncode(StorageService.exportData());
+              await Share.shareXFiles(
+                [
+                  XFile.fromData(
+                    utf8.encode(json),
+                    name: 'bmi_pro_backup.json',
+                    mimeType: 'application/json',
+                  ),
+                ],
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_download_outlined),
+            title: Text(context.tr('importBackup')),
+            onTap: () => _importBackup(context),
+          ),
           const SizedBox(height: 8),
           Text(
             '${context.tr('appName')} • ${locale.languageCode.toUpperCase()}',
@@ -95,6 +128,41 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _importBackup(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        withData: true,
+      );
+      final bytes = result?.files.single.bytes;
+      if (bytes == null) return;
+      final decoded = jsonDecode(utf8.decode(bytes));
+      if (decoded is! Map) throw const FormatException('not a backup');
+      await StorageService.importData(
+        decoded.map((k, v) => MapEntry(k.toString(), v)),
+      );
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          content: Text(context.tr('importDone')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.tr('save')),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('importFailed'))),
+      );
+    }
   }
 
   String _languageName(String value, BuildContext context) => switch (value) {
@@ -108,4 +176,35 @@ class SettingsPage extends ConsumerWidget {
         'de' => 'Deutsch',
         _ => value,
       };
+}
+
+/// Weekly weigh-in reminder switch (Fridays, 09:00).
+class _ReminderTile extends StatefulWidget {
+  const _ReminderTile();
+
+  @override
+  State<_ReminderTile> createState() => _ReminderTileState();
+}
+
+class _ReminderTileState extends State<_ReminderTile> {
+  bool _on = StorageService.getReminder();
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: const Icon(Icons.notifications_outlined),
+      title: Text(context.tr('weeklyReminder')),
+      subtitle: Text(context.tr('weeklyReminderSub')),
+      value: _on,
+      onChanged: (value) async {
+        setState(() => _on = value);
+        await StorageService.saveReminder(value);
+        await NotificationService.setWeeklyReminder(
+          value,
+          title: context.tr('reminderTitle'),
+          body: context.tr('reminderBody'),
+        );
+      },
+    );
+  }
 }

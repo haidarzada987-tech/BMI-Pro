@@ -205,4 +205,34 @@ class StorageService {
 
   static String getUnit() =>
       _box.get('unit', defaultValue: 'kg') as String;
+
+  static Future<void> saveReminder(bool value) => _box.put('reminder', value);
+
+  static bool getReminder() =>
+      _box.get('reminder', defaultValue: false) as bool;
+
+  // ---------- backup: export / import everything as JSON ----------
+
+  static Map<String, dynamic> exportData() {
+    final out = <String, dynamic>{};
+    for (final key in _box.keys) {
+      out[key.toString()] = _jsonSafe(_box.get(key));
+    }
+    return out;
+  }
+
+  static dynamic _jsonSafe(dynamic value) {
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k.toString(), _jsonSafe(v)));
+    }
+    if (value is List) return value.map(_jsonSafe).toList();
+    return value;
+  }
+
+  static Future<void> importData(Map<String, dynamic> data) async {
+    await _box.clear();
+    for (final entry in data.entries) {
+      await _box.put(entry.key, entry.value);
+    }
+  }
 }
