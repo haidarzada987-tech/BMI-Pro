@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -136,18 +138,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  width: 110,
-                  height: 150,
-                  child: Image.asset(
-                    character.assetPath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.person_outline,
-                      size: 72,
-                    ),
-                  ),
-                ),
+                _AnimatedCharacter(assetPath: character.assetPath),
               ],
             ),
           ),
@@ -231,4 +222,74 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ],
         ),
       );
+}
+
+/// The character does a little jump-and-wiggle whenever it is tapped.
+class _AnimatedCharacter extends StatefulWidget {
+  const _AnimatedCharacter({required this.assetPath});
+
+  final String assetPath;
+
+  @override
+  State<_AnimatedCharacter> createState() => _AnimatedCharacterState();
+}
+
+class _AnimatedCharacterState extends State<_AnimatedCharacter>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _controller.forward(from: 0),
+      child: AnimatedBuilder(
+        animation: _controller,
+        child: SizedBox(
+          width: 110,
+          height: 150,
+          child: Image.asset(
+            widget.assetPath,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.person_outline,
+              size: 72,
+            ),
+          ),
+        ),
+        builder: (context, child) {
+          final t = _controller.value;
+          final jump = -16 * math.sin(math.pi * t);
+          final wiggle = 0.09 * math.sin(t * math.pi * 4) * (1 - t);
+          final scale = 1 + 0.05 * math.sin(math.pi * t);
+          return Transform.translate(
+            offset: Offset(0, jump),
+            child: Transform.rotate(
+              angle: wiggle,
+              alignment: Alignment.bottomCenter,
+              child: Transform.scale(
+                scale: scale,
+                alignment: Alignment.bottomCenter,
+                child: child,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

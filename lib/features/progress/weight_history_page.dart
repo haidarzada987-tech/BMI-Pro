@@ -12,6 +12,63 @@ class WeightHistoryPage extends StatefulWidget {
 }
 
 class _WeightHistoryPageState extends State<WeightHistoryPage> {
+  Future<void> _editEntry(WeightEntry entry) async {
+    final controller =
+        TextEditingController(text: entry.weightKg.toStringAsFixed(1));
+    final value = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.tr('edit')),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(labelText: context.tr('currentWeight')),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.tr('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext)
+                .pop(double.tryParse(controller.text.trim())),
+            child: Text(context.tr('save')),
+          ),
+        ],
+      ),
+    );
+    if (value != null && value > 0) {
+      await StorageService.updateWeightEntry(entry.id, value);
+      await StorageService.syncCurrentWeightToLatest();
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _deleteEntry(WeightEntry entry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.tr('delete')),
+        content: Text(context.tr('deleteEntryQ')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.tr('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.tr('delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await StorageService.deleteWeightEntry(entry.id);
+      await StorageService.syncCurrentWeightToLatest();
+      if (mounted) setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final list = StorageService.getWeightHistory()
@@ -32,6 +89,21 @@ class _WeightHistoryPageState extends State<WeightHistoryPage> {
                       leading: const Icon(Icons.monitor_weight_outlined),
                       title: Text('${entry.weightKg.toStringAsFixed(1)} kg'),
                       subtitle: Text(_date(entry)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined),
+                            tooltip: context.tr('edit'),
+                            onPressed: () => _editEntry(entry),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            tooltip: context.tr('delete'),
+                            onPressed: () => _deleteEntry(entry),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -52,6 +124,14 @@ class _WeightHistoryPageState extends State<WeightHistoryPage> {
     final range = (maxWeight - minWeight).abs();
     final padding = range < 1 ? 1.0 : range * 0.15;
 
+    // Rounded axis bounds and a fixed label interval keep the Y-axis
+    // numbers evenly spaced so they never overlap.
+    var axisMin = (minWeight - padding).floorToDouble();
+    if (axisMin < 0) axisMin = 0;
+    var axisMax = (maxWeight + padding).ceilToDouble();
+    if (axisMax - axisMin < 4) axisMax = axisMin + 4;
+    final interval = ((axisMax - axisMin) / 4).ceilToDouble();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
@@ -59,14 +139,30 @@ class _WeightHistoryPageState extends State<WeightHistoryPage> {
           height: 230,
           child: LineChart(
             LineChartData(
-              minY: (minWeight - padding).clamp(0.0, double.infinity),
-              maxY: maxWeight + padding,
+              minY: axisMin,
+              maxY: axisMax,
               gridData: const FlGridData(show: true),
               titlesData: FlTitlesData(
                 topTitles:
                     const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles:
                     const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 36,
+                    interval: interval,
+                    getTitlesWidget: (value, meta) {
+                      return SideTitleWidget(
+                        axisSide: meta.axisSide,
+                        child: Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,

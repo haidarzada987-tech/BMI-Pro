@@ -22,6 +22,8 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
   ActivityLevel activity = ActivityLevel.moderatelyActive;
   double? bmi;
   double? energy;
+  double? resultWeightKg;
+  double? resultHeightCm;
   String? error;
 
   void calculate() {
@@ -50,6 +52,8 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
     setState(() {
       bmi = bmiValue;
       energy = health.tdee(bmr, activity);
+      resultWeightKg = w;
+      resultHeightCm = h;
       error = null;
     });
   }
@@ -130,6 +134,8 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
                     Text(
                       '${context.tr('dailyEnergy')}: ${energy!.round()} kcal',
                     ),
+                    const SizedBox(height: 12),
+                    _healthyRangeInfo(context),
                   ],
                 ),
               ),
@@ -137,6 +143,45 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _healthyRangeInfo(BuildContext context) {
+    const service = BMIService();
+    const units = UnitService();
+    final unit = StorageService.getUnit();
+    final h = resultHeightCm!;
+    final w = resultWeightKg!;
+    final minKg = service.healthyMinKg(h);
+    final maxKg = service.healthyMaxKg(h);
+
+    String diffText;
+    if (w > maxKg) {
+      diffText =
+          '${units.fromKg(w - maxKg, unit).toStringAsFixed(1)} ${context.tr('kgAbove')}';
+    } else if (w < minKg) {
+      diffText =
+          '${units.fromKg(minKg - w, unit).toStringAsFixed(1)} ${context.tr('kgBelow')}';
+    } else {
+      diffText = context.tr('inHealthyRange');
+    }
+
+    return Column(
+      children: [
+        Text(
+          '${context.tr('healthyRange')}: '
+          '${units.fromKg(minKg, unit).toStringAsFixed(1)}'
+          '–${units.fromKg(maxKg, unit).toStringAsFixed(1)} '
+          '${units.label(unit)}',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          diffText,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ],
     );
   }
 

@@ -9,6 +9,7 @@ enum ActivityLevel {
 }
 
 class UserProfile {
+  final String name;
   final Gender gender;
   final int age;
   final double heightCm;
@@ -17,6 +18,7 @@ class UserProfile {
   final ActivityLevel activityLevel;
 
   const UserProfile({
+    this.name = '',
     required this.gender,
     required this.age,
     required this.heightCm,
@@ -26,6 +28,7 @@ class UserProfile {
   });
 
   Map<String, dynamic> toMap() => {
+        'name': name,
         'gender': gender.name,
         'age': age,
         'heightCm': heightCm,
@@ -37,6 +40,7 @@ class UserProfile {
   factory UserProfile.fromMap(Map<String, dynamic> map) {
     final activityName = map['activityLevel']?.toString();
     return UserProfile(
+      name: map['name']?.toString() ?? '',
       gender: map['gender'] == 'female' ? Gender.female : Gender.male,
       age: (map['age'] as num).toInt(),
       heightCm: (map['heightCm'] as num).toDouble(),

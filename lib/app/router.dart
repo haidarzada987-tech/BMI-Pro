@@ -7,6 +7,7 @@ import '../features/calculator/bmi_calculator_page.dart';
 import '../features/progress/weight_history_page.dart';
 import '../features/profile/profile_page.dart';
 import '../features/profile/edit_profile_page.dart';
+import '../features/profile/add_person_page.dart';
 import '../features/settings/settings_page.dart';
 
 final appRouter = GoRouter(
@@ -24,6 +25,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/weight-history', builder: (_, __) => const WeightHistoryPage()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfilePage()),
     GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfilePage()),
+    GoRoute(path: '/profile/add', builder: (_, __) => const AddPersonPage()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
   ],
 );

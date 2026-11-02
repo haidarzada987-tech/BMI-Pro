@@ -12,6 +12,7 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
+  final name = TextEditingController();
   final age = TextEditingController(text: '25');
   final height = TextEditingController(text: '175');
   final weight = TextEditingController(text: '70');
@@ -23,6 +24,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   void dispose() {
+    name.dispose();
     age.dispose();
     height.dispose();
     weight.dispose();
@@ -51,6 +53,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
 
     final profile = UserProfile(
+      name: name.text.trim(),
       gender: gender,
       age: ageValue,
       heightCm: heightValue,
@@ -80,6 +83,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           Text(context.tr('profileIntro')),
           const SizedBox(height: 24),
+          TextField(
+            controller: name,
+            decoration: InputDecoration(labelText: context.tr('name')),
+          ),
+          const SizedBox(height: 14),
           DropdownButtonFormField<Gender>(
             value: gender,
             decoration: InputDecoration(labelText: context.tr('gender')),

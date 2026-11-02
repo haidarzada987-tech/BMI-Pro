@@ -12,7 +12,7 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  late final TextEditingController age, height, weight, target;
+  late final TextEditingController name, age, height, weight, target;
   late Gender gender;
   late ActivityLevel activity;
   String? error;
@@ -21,6 +21,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void initState() {
     super.initState();
     final profile = UserProfile.fromMap(StorageService.getProfile()!);
+    name = TextEditingController(text: profile.name);
     age = TextEditingController(text: '${profile.age}');
     height = TextEditingController(text: '${profile.heightCm}');
     weight = TextEditingController(text: '${profile.currentWeightKg}');
@@ -31,6 +32,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   void dispose() {
+    name.dispose();
     age.dispose();
     height.dispose();
     weight.dispose();
@@ -60,6 +62,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     final profile = UserProfile(
+      name: name.text.trim(),
       gender: gender,
       age: ageValue,
       heightCm: heightValue,
@@ -82,6 +85,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          TextField(
+            controller: name,
+            decoration: InputDecoration(labelText: context.tr('name')),
+          ),
+          const SizedBox(height: 14),
           DropdownButtonFormField<Gender>(
             value: gender,
             decoration: InputDecoration(labelText: context.tr('gender')),
