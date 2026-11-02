@@ -9,6 +9,7 @@ import '../features/profile/profile_page.dart';
 import '../features/profile/edit_profile_page.dart';
 import '../features/profile/add_person_page.dart';
 import '../features/settings/settings_page.dart';
+import '../features/about/about_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -27,5 +28,6 @@ final appRouter = GoRouter(
     GoRoute(path: '/profile/edit', builder: (_, __) => const EditProfilePage()),
     GoRoute(path: '/profile/add', builder: (_, __) => const AddPersonPage()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+    GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
   ],
 );

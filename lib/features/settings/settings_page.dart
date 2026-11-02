@@ -163,7 +163,7 @@ class SettingsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${context.tr('appName')} • v1.2.0 • ${locale.languageCode.toUpperCase()}',
+            '${context.tr('appName')} • v1.2.1 • ${locale.languageCode.toUpperCase()}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],

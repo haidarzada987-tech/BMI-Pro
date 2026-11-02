@@ -38,32 +38,36 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    if (!enabled) {
-      await _plugin.cancel(_reminderId);
-      return;
+    try {
+      if (!enabled) {
+        await _plugin.cancel(_reminderId);
+        return;
+      }
+      final androidImpl = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      await androidImpl?.requestNotificationsPermission();
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'weekly_weight_reminder',
+          'Weekly weight reminder',
+          channelDescription: 'Reminds you to log your weight once a week',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+      );
+      await _plugin.zonedSchedule(
+        _reminderId,
+        title,
+        body,
+        _nextFridayNine(),
+        details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      );
+    } catch (_) {
+      // A reminder problem must never crash the app.
     }
-    final androidImpl = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    await androidImpl?.requestNotificationsPermission();
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'weekly_weight_reminder',
-        'Weekly weight reminder',
-        channelDescription: 'Reminds you to log your weight once a week',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      ),
-    );
-    await _plugin.zonedSchedule(
-      _reminderId,
-      title,
-      body,
-      _nextFridayNine(),
-      details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-    );
   }
 }

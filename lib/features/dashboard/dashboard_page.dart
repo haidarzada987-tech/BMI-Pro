@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/localization_extension.dart';
 import '../../core/storage/storage_service.dart';
 import '../../models/user_profile.dart';
@@ -101,6 +104,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
 
     return Scaffold(
+      drawer: _drawer(context),
       appBar: AppBar(
         title: Text(context.tr('appName')),
         actions: [
@@ -213,6 +217,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   /// a rough "about N weeks to your goal" estimate. Empty when the
   /// history is too short to say anything honest.
   List<Widget> _summaryLines(BuildContext context, double targetKg) {
+    try {
+      return _summaryLinesInner(context, targetKg);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  List<Widget> _summaryLinesInner(BuildContext context, double targetKg) {
     final history = StorageService.getWeightHistory();
     if (history.length < 2) return const [];
     final sorted = [...history]..sort((a, b) => a.date.compareTo(b.date));
@@ -262,6 +274,139 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       }
     }
     return lines;
+  }
+
+  // ---------- side drawer (app menu) ----------
+
+  Widget _drawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child:
+                      Image.asset('assets/icon.png', width: 64, height: 64),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.tr('appName'),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text('${context.tr('versionLabel')} 1.2.1'),
+              ],
+            ),
+          ),
+          _drawerItem(
+            context,
+            Icons.home_outlined,
+            context.tr('home'),
+            () => Navigator.pop(context),
+          ),
+          _drawerItem(
+            context,
+            Icons.show_chart_outlined,
+            context.tr('history'),
+            () {
+              Navigator.pop(context);
+              context.push('/weight-history');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.person_outline,
+            context.tr('profile'),
+            () {
+              Navigator.pop(context);
+              context.push('/profile');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.share_outlined,
+            context.tr('shareApp'),
+            () {
+              Navigator.pop(context);
+              Share.share(
+                'BMI Pro — BMI & weight tracker\n'
+                'https://github.com/haidarzada987-tech/BMI-Pro',
+              );
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.star_outline,
+            context.tr('rateUs'),
+            () {
+              Navigator.pop(context);
+              _openUrl('https://github.com/haidarzada987-tech/BMI-Pro');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.language_outlined,
+            context.tr('language'),
+            () {
+              Navigator.pop(context);
+              context.push('/settings');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.settings_outlined,
+            context.tr('settings'),
+            () {
+              Navigator.pop(context);
+              context.push('/settings');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.info_outline,
+            context.tr('aboutUs'),
+            () {
+              Navigator.pop(context);
+              context.push('/about');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.exit_to_app, color: Colors.red),
+            title: Text(
+              context.tr('exitApp'),
+              style: const TextStyle(color: Colors.red),
+            ),
+            onTap: () => SystemNavigator.pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onTap,
+  ) {
+    return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _card(Widget child) => Card(
