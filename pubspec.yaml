@@ -26,4 +26,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/characters/
+    - assets/characters/male/young/
+    - assets/characters/male/adult/
+    - assets/characters/male/senior/
+    - assets/characters/female/young/
+    - assets/characters/female/adult/
+    - assets/characters/female/senior/

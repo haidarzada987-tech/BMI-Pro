@@ -63,7 +63,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final displayUnit = ref.watch(unitProvider);
     final raw = StorageService.getProfile();
     if (raw == null) return const SizedBox.shrink();
 

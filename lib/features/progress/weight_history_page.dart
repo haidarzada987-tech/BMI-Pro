@@ -81,7 +81,7 @@ class _WeightHistoryPageState extends State<WeightHistoryPage> {
                       }
                       final d = entries[index].date;
                       return SideTitleWidget(
-                        meta: meta,
+                        axisSide: meta.axisSide,
                         child: Text('${d.day}/${d.month}',
                             style: const TextStyle(fontSize: 10)),
                       );
