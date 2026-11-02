@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../app/theme/theme_provider.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/localization/localization_extension.dart';
@@ -120,14 +121,61 @@ class SettingsPage extends ConsumerWidget {
             title: Text(context.tr('importBackup')),
             onTap: () => _importBackup(context),
           ),
+          const Divider(height: 30),
+          Text(
+            context.tr('about'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const CircleAvatar(
+              radius: 24,
+              child: Text('NH', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            title: const Text(
+              'Noorullah Haidari',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(context.tr('developedBy')),
+          ),
+          ListTile(
+            leading: const Icon(Icons.code_outlined),
+            title: const Text('GitHub'),
+            subtitle: const Text('github.com/haidarzada987-tech'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _open('https://github.com/haidarzada987-tech'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.work_outline),
+            title: const Text('LinkedIn'),
+            subtitle: const Text('linkedin.com/in/haidar-zada'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () =>
+                _open('https://www.linkedin.com/in/haidar-zada-44863142b'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.email_outlined),
+            title: const Text('Email'),
+            subtitle: const Text('haidarzada987@gmail.com'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _open('mailto:haidarzada987@gmail.com'),
+          ),
           const SizedBox(height: 8),
           Text(
-            '${context.tr('appName')} • ${locale.languageCode.toUpperCase()}',
+            '${context.tr('appName')} • v1.2.0 • ${locale.languageCode.toUpperCase()}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _importBackup(BuildContext context) async {
