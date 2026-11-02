@@ -16,6 +16,7 @@ import '../../services/character_service.dart';
 import '../../services/unit_service.dart';
 import '../../core/storage/unit_provider.dart';
 import '../../app/theme/theme_provider.dart';
+import '../../core/localization/locale_provider.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -106,15 +107,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     return Scaffold(
       drawer: _drawer(context),
-      appBar: AppBar(
-        title: Text(context.tr('appName')),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(context.tr('appName'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
@@ -310,7 +303,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text('${context.tr('versionLabel')} 1.2.1'),
+                      Text('${context.tr('versionLabel')} 1.2.2'),
                     ],
                   ),
                 ),
@@ -396,7 +389,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             context.tr('language'),
             () {
               Navigator.pop(context);
-              context.push('/settings');
+              _showLanguageDialog(context);
             },
           ),
           _drawerItem(
@@ -439,6 +432,57 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   ) {
     return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
   }
+
+  /// The drawer's own language picker — no trip into Settings needed.
+  void _showLanguageDialog(BuildContext context) {
+    final selected = StorageService.getLanguage();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.tr('language')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final value in [
+                'system',
+                'en',
+                'fa',
+                'ar',
+                'tr',
+                'fr',
+                'es',
+                'de',
+              ])
+                RadioListTile<String>(
+                  value: value,
+                  groupValue: selected,
+                  title: Text(_languageName(value, context)),
+                  onChanged: (next) {
+                    if (next != null) {
+                      ref.read(localeProvider.notifier).change(next);
+                    }
+                    Navigator.pop(dialogContext);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _languageName(String value, BuildContext context) => switch (value) {
+        'system' => context.tr('system'),
+        'en' => 'English',
+        'fa' => 'فارسی / دری',
+        'ar' => 'العربية',
+        'tr' => 'Türkçe',
+        'fr' => 'Français',
+        'es' => 'Español',
+        'de' => 'Deutsch',
+        _ => value,
+      };
 
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);

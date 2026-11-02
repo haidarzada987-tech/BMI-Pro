@@ -40,7 +40,7 @@ class AboutPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          _row(context, context.tr('versionLabel'), '1.2.1'),
+          _row(context, context.tr('versionLabel'), '1.2.2'),
           _row(context, context.tr('phoneLabel'), _phoneDisplay),
           _row(context, context.tr('emailLabel'), _email),
           _row(context, context.tr('designedBy'), 'Noorullah Haidari'),
