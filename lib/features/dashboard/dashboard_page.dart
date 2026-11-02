@@ -15,6 +15,7 @@ import '../../services/goal_service.dart';
 import '../../services/character_service.dart';
 import '../../services/unit_service.dart';
 import '../../core/storage/unit_provider.dart';
+import '../../app/theme/theme_provider.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -287,23 +288,51 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child:
-                      Image.asset('assets/icon.png', width: 64, height: 64),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.tr('appName'),
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/icon.png',
+                          width: 64,
+                          height: 64,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.tr('appName'),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('${context.tr('versionLabel')} 1.2.1'),
+                    ],
                   ),
                 ),
-                Text('${context.tr('versionLabel')} 1.2.1'),
+                // Dark / light switch, like the moon in the reference drawer.
+                Align(
+                  alignment: AlignmentDirectional.topEnd,
+                  child: IconButton(
+                    icon: Icon(
+                      ref.watch(themeProvider) == ThemeMode.dark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                    ),
+                    onPressed: () {
+                      final current = ref.read(themeProvider);
+                      ref.read(themeProvider.notifier).change(
+                            current == ThemeMode.dark
+                                ? ThemeMode.light
+                                : ThemeMode.dark,
+                          );
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -350,6 +379,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             () {
               Navigator.pop(context);
               _openUrl('https://github.com/haidarzada987-tech/BMI-Pro');
+            },
+          ),
+          _drawerItem(
+            context,
+            Icons.apps_outlined,
+            context.tr('suggestedApps'),
+            () {
+              Navigator.pop(context);
+              _openUrl('https://github.com/haidarzada987-tech?tab=repositories');
             },
           ),
           _drawerItem(
